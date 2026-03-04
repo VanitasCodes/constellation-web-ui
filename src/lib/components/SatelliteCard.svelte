@@ -1,5 +1,8 @@
 <script>
+  import { slide } from 'svelte/transition';
+
   let { satellite, oncommand } = $props();
+  let expanded = $state(false);
 
   const stateColors = {
     NEW: { bg: '#e9ecef', text: '#495057' },
@@ -30,12 +33,40 @@
 
 <div class="card">
   <div class="top">
-    <span class="name">{satellite.name}</span>
+    <button class="name" onclick={() => (expanded = !expanded)}>
+      <svg class="chevron" class:rotated={expanded} viewBox="0 0 12 12">
+        <path
+          d="M4 2 L8 6 L4 10"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+        />
+      </svg>
+      {satellite.name}
+    </button>
     <span class="badge" style="background: {colors.bg}; color: {colors.text}">
       {satellite.state}
     </span>
   </div>
   <p class="message">{satellite.lastMessage}</p>
+
+  {#if expanded}
+    <div class="details" transition:slide={{ duration: 150 }}>
+      <div class="row">
+        <span class="key">Host</span>
+        <span class="val">{satellite.host}</span>
+      </div>
+      <div class="row">
+        <span class="key">Port</span>
+        <span class="val">{satellite.port}</span>
+      </div>
+      <div class="row">
+        <span class="key">State</span>
+        <span class="val">{satellite.state}</span>
+      </div>
+    </div>
+  {/if}
 
   {#if isOrbit}
     <div class="split-actions">
@@ -82,10 +113,34 @@
   }
 
   .name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     font-size: 14px;
     font-weight: 600;
     font-family: 'JetBrains Mono', monospace;
     color: #1a1b1e;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: color 0.12s;
+  }
+
+  .name:hover {
+    color: #4263eb;
+  }
+
+  .chevron {
+    width: 12px;
+    height: 12px;
+    color: #adb5bd;
+    transition: transform 0.15s ease;
+    flex-shrink: 0;
+  }
+
+  .chevron.rotated {
+    transform: rotate(90deg);
   }
 
   .badge {
@@ -102,6 +157,32 @@
     font-size: 13px;
     color: #868e96;
     margin-bottom: 14px;
+    padding-left: 18px;
+  }
+
+  .details {
+    margin-bottom: 14px;
+    padding: 10px 0;
+    border-top: 1px solid #f1f3f5;
+    border-bottom: 1px solid #f1f3f5;
+  }
+
+  .row {
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+    padding: 2px 0;
+  }
+
+  .key {
+    color: #868e96;
+    font-weight: 600;
+    min-width: 50px;
+  }
+
+  .val {
+    color: #343a40;
+    font-family: 'JetBrains Mono', monospace;
   }
 
   .action {
