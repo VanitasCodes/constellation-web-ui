@@ -29,12 +29,56 @@
 
   let runId = $state('run_001');
 
+  const transitions = {
+    initialize: { from: ['NEW', 'ERROR', 'SAFE'], to: 'INIT' },
+    launch: { from: ['INIT'], to: 'ORBIT' },
+    start: { from: ['ORBIT'], to: 'RUN' },
+    stop: { from: ['RUN'], to: 'ORBIT' },
+    land: { from: ['ORBIT'], to: 'INIT' },
+  };
+
+  const labels = {
+    initialize: 'Initialized',
+    launch: 'Launched',
+    start: 'Started',
+    stop: 'Stopped',
+    land: 'Landed',
+  };
+
   function handleCommand(command) {
-    console.log('Global:', command);
+    let t = transitions[command];
+    if (!t) return;
+
+    let suffix = command === 'start' ? ` (Run: ${runId})` : '';
+
+    satellites = satellites.map((sat) => {
+      if (t.from.includes(sat.state)) {
+        return {
+          ...sat,
+          state: t.to,
+          lastMessage: labels[command] + suffix,
+        };
+      }
+      return sat;
+    });
   }
 
   function handleSatelliteCommand(name, command) {
-    console.log('Satellite:', name, command);
+    let t = transitions[command];
+    if (!t) return;
+
+    let suffix = command === 'start' ? ` (Run: ${runId})` : '';
+
+    satellites = satellites.map((sat) => {
+      if (sat.name === name && t.from.includes(sat.state)) {
+        return {
+          ...sat,
+          state: t.to,
+          lastMessage: labels[command] + suffix,
+        };
+      }
+      return sat;
+    });
   }
 </script>
 

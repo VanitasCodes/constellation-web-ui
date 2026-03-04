@@ -10,17 +10,22 @@
     ERROR: { bg: '#ffe3e3', text: '#c92a2a' },
   };
 
-  const nextActions = {
+  const singleActions = {
     NEW: { cmd: 'initialize', label: 'Initialize', color: '#4263eb' },
     INIT: { cmd: 'launch', label: 'Launch', color: '#3b5bdb' },
-    ORBIT: { cmd: 'start', label: 'Start', color: '#2b8a3e' },
     RUN: { cmd: 'stop', label: 'Stop', color: '#c92a2a' },
     SAFE: { cmd: 'initialize', label: 'Initialize', color: '#4263eb' },
     ERROR: { cmd: 'initialize', label: 'Initialize', color: '#4263eb' },
   };
 
+  const orbitActions = [
+    { cmd: 'start', label: 'Start', color: '#2b8a3e' },
+    { cmd: 'land', label: 'Land', color: '#e8590c' },
+  ];
+
   let colors = $derived(stateColors[satellite.state] ?? stateColors.NEW);
-  let action = $derived(nextActions[satellite.state]);
+  let single = $derived(singleActions[satellite.state]);
+  let isOrbit = $derived(satellite.state === 'ORBIT');
 </script>
 
 <div class="card">
@@ -31,13 +36,26 @@
     </span>
   </div>
   <p class="message">{satellite.lastMessage}</p>
-  {#if action}
+
+  {#if isOrbit}
+    <div class="split-actions">
+      {#each orbitActions as act}
+        <button
+          class="action"
+          style="background: {act.color}"
+          onclick={() => oncommand?.(satellite.name, act.cmd)}
+        >
+          {act.label}
+        </button>
+      {/each}
+    </div>
+  {:else if single}
     <button
-      class="action"
-      style="background: {action.color}"
-      onclick={() => oncommand?.(satellite.name, action.cmd)}
+      class="action full"
+      style="background: {single.color}"
+      onclick={() => oncommand?.(satellite.name, single.cmd)}
     >
-      {action.label}
+      {single.label}
     </button>
   {/if}
 </div>
@@ -87,7 +105,6 @@
   }
 
   .action {
-    width: 100%;
     padding: 8px;
     border: none;
     border-radius: 6px;
@@ -100,5 +117,18 @@
 
   .action:hover {
     opacity: 0.88;
+  }
+
+  .action.full {
+    width: 100%;
+  }
+
+  .split-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .split-actions .action {
+    flex: 1;
   }
 </style>
