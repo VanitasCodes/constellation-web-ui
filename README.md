@@ -1,42 +1,57 @@
-# sv
+# Constellation Web Interface
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A web-based control panel for monitoring and controlling Constellation satellite setups, built as a GSoC 2026 evaluation task for DESY.
 
-## Creating a project
+## Features
 
-If you're seeing this, you've probably already done this step. Congrats!
+- **Header Bar**: Displays satellite count, global state indicator, and connection status
+- **Control Panel**: Command buttons (Initialize, Launch, Start, Stop, Land) with state-aware enabling/disabling, and Run ID input
+- **Satellite Cards**: Individual satellite status with expandable details, state badges, and context-aware action buttons
+- **Log Viewer**: Real-time log display with level filtering, source filtering, search, and auto-scroll
 
-```sh
-# create a new project
-npx sv create my-app
+## Satellite State Machine
+
+The interface implements the Constellation FSM:
+
+```
+NEW → [initialize] → INIT → [launch] → ORBIT → [start] → RUN
+INIT ← [land] ← ORBIT ← [stop] ← RUN
 ```
 
-To recreate this project with the same configuration:
+**States**: NEW, INIT, ORBIT, RUN, SAFE, ERROR, DEAD
 
-```sh
-# recreate this project
-npx sv@0.12.5 create --template minimal --no-types --install npm constellation-web-ui
-```
+## Tech Stack
 
-## Developing
+- **Framework**: SvelteKit (Svelte 5)
+- **Styling**: Custom CSS with responsive design
+- **Fonts**: DM Sans, JetBrains Mono
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+## Getting Started
 
-```sh
+```bash
+# Install dependencies
+npm install
+
+# Run development server
 npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
 ```
 
-## Building
+Open [http://localhost:5173](http://localhost:5173) in your browser.
 
-To create a production version of your app:
+## Project Structure
 
-```sh
-npm run build
+```
+src/
+├── lib/components/
+│   ├── HeaderBar.svelte      # Top bar with status indicators
+│   ├── ControlPanel.svelte   # Global command buttons
+│   ├── SatelliteCard.svelte  # Individual satellite display
+│   └── LogViewer.svelte      # Log panel with filtering
+├── routes/
+│   └── +page.svelte          # Main dashboard
+└── app.css                   # Global styles
 ```
 
-You can preview the production build with `npm run preview`.
+## Author
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+Vishwajeet Singh
