@@ -2,6 +2,7 @@
   import HeaderBar from '$lib/components/HeaderBar.svelte';
   import ControlPanel from '$lib/components/ControlPanel.svelte';
   import SatelliteCard from '$lib/components/SatelliteCard.svelte';
+  import LogViewer from '$lib/components/LogViewer.svelte';
 
   let satellites = $state([
     {
@@ -27,6 +28,51 @@
     },
   ]);
 
+  let logs = $state([
+    {
+      time: '10:30:01',
+      level: 'STATUS',
+      source: 'Controller',
+      message: 'System started',
+    },
+    {
+      time: '10:30:02',
+      level: 'INFO',
+      source: 'Sputnik.One',
+      message: 'Satellite discovered',
+    },
+    {
+      time: '10:30:02',
+      level: 'INFO',
+      source: 'Sputnik.Two',
+      message: 'Satellite discovered',
+    },
+    {
+      time: '10:30:02',
+      level: 'INFO',
+      source: 'RandomTransmitter.Sender',
+      message: 'Satellite discovered',
+    },
+    {
+      time: '10:30:03',
+      level: 'STATUS',
+      source: 'Controller',
+      message: '3 satellites connected',
+    },
+    {
+      time: '10:30:05',
+      level: 'DEBUG',
+      source: 'Sputnik.One',
+      message: 'Heartbeat received',
+    },
+    {
+      time: '10:30:06',
+      level: 'WARNING',
+      source: 'RandomTransmitter.Sender',
+      message: 'Buffer usage at 80%',
+    },
+  ]);
+
   let runId = $state('run_001');
 
   const transitions = {
@@ -45,22 +91,38 @@
     land: 'Landed',
   };
 
+  function now() {
+    return new Date().toLocaleTimeString('en-GB', { hour12: false });
+  }
+
+  function addLog(level, source, message) {
+    logs.push({ time: now(), level, source, message });
+    if (logs.length > 200) logs = logs.slice(-200);
+  }
+
   function handleCommand(command) {
     let t = transitions[command];
     if (!t) return;
 
     let suffix = command === 'start' ? ` (Run: ${runId})` : '';
+    let count = 0;
 
     satellites = satellites.map((sat) => {
       if (t.from.includes(sat.state)) {
-        return {
-          ...sat,
-          state: t.to,
-          lastMessage: labels[command] + suffix,
-        };
+        count++;
+        addLog('STATUS', sat.name, `${labels[command]} successful${suffix}`);
+        return { ...sat, state: t.to, lastMessage: labels[command] + suffix };
       }
       return sat;
     });
+
+    if (count > 0) {
+      addLog(
+        'STATUS',
+        'Controller',
+        `${labels[command]} ${count} satellite${count !== 1 ? 's' : ''}${suffix}`
+      );
+    }
   }
 
   function handleSatelliteCommand(name, command) {
@@ -71,14 +133,15 @@
 
     satellites = satellites.map((sat) => {
       if (sat.name === name && t.from.includes(sat.state)) {
-        return {
-          ...sat,
-          state: t.to,
-          lastMessage: labels[command] + suffix,
-        };
+        addLog('STATUS', sat.name, `${labels[command]} successful${suffix}`);
+        return { ...sat, state: t.to, lastMessage: labels[command] + suffix };
       }
       return sat;
     });
+  }
+
+  function clearLogs() {
+    logs = [];
   }
 </script>
 
@@ -94,6 +157,8 @@
       {/each}
     </div>
   </main>
+
+  <LogViewer {logs} {satellites} onclear={clearLogs} />
 </div>
 
 <style>
