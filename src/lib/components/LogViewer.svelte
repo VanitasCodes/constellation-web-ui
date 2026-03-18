@@ -110,11 +110,10 @@
 
 <style>
   .viewer {
-    flex: 1;
     display: flex;
     flex-direction: column;
     background: #1a1b1e;
-    min-height: 280px;
+    height: 280px;
     margin: 0 24px 24px;
     border-radius: 10px;
     overflow: hidden;
@@ -191,7 +190,6 @@
     flex: 1;
     overflow-y: auto;
     padding: 6px 0;
-    max-height: 360px;
   }
 
   .row {
@@ -266,6 +264,7 @@
   @media (max-width: 768px) {
     .viewer {
       margin: 0 16px 16px;
+      height: 240px;
     }
     .toolbar {
       flex-direction: column;

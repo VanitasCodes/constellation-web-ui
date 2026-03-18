@@ -11,6 +11,14 @@
     RUN: { bg: '#d3f9d8', text: '#2b8a3e' },
     SAFE: { bg: '#ffe8cc', text: '#d9480f' },
     ERROR: { bg: '#ffe3e3', text: '#c92a2a' },
+    DEAD: { bg: '#868e96', text: '#fff' },
+    initializing: { bg: '#e5dbff', text: '#7048e8' },
+    launching: { bg: '#e5dbff', text: '#7048e8' },
+    landing: { bg: '#e5dbff', text: '#7048e8' },
+    starting: { bg: '#e5dbff', text: '#7048e8' },
+    stopping: { bg: '#e5dbff', text: '#7048e8' },
+    reconfiguring: { bg: '#e5dbff', text: '#7048e8' },
+    interrupting: { bg: '#e5dbff', text: '#7048e8' },
   };
 
   const singleActions = {
@@ -26,12 +34,29 @@
     { cmd: 'land', label: 'Land', color: '#e8590c' },
   ];
 
+  const transitionalStates = [
+    'initializing',
+    'launching',
+    'landing',
+    'starting',
+    'stopping',
+    'reconfiguring',
+    'interrupting',
+  ];
+
+  let isTransitional = $derived(transitionalStates.includes(satellite.state));
   let colors = $derived(stateColors[satellite.state] ?? stateColors.NEW);
   let single = $derived(singleActions[satellite.state]);
   let isOrbit = $derived(satellite.state === 'ORBIT');
 </script>
 
 <div class="card">
+  <div
+    class="state-banner"
+    style="background: {colors.bg}; color: {colors.text}"
+  >
+    {satellite.state}
+  </div>
   <div class="top">
     <button class="name" onclick={() => (expanded = !expanded)}>
       <svg class="chevron" class:rotated={expanded} viewBox="0 0 12 12">
@@ -45,9 +70,6 @@
       </svg>
       {satellite.name}
     </button>
-    <span class="badge" style="background: {colors.bg}; color: {colors.text}">
-      {satellite.state}
-    </span>
   </div>
   <p class="message">{satellite.lastMessage}</p>
 
@@ -68,7 +90,12 @@
     </div>
   {/if}
 
-  {#if isOrbit}
+  {#if isTransitional}
+    <div class="transitional-indicator">
+      <span class="spinner"></span>
+      <span class="transitional-text">{satellite.state}...</span>
+    </div>
+  {:else if isOrbit}
     <div class="split-actions">
       {#each orbitActions as act}
         <button
@@ -103,6 +130,18 @@
 
   .card:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  .state-banner {
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: center;
+    border-radius: 8px 8px 0 0;
+    margin: -16px -18px 12px -18px;
   }
 
   .top {
@@ -141,16 +180,6 @@
 
   .chevron.rotated {
     transform: rotate(90deg);
-  }
-
-  .badge {
-    font-size: 10px;
-    font-weight: 700;
-    padding: 3px 8px;
-    border-radius: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-family: 'JetBrains Mono', monospace;
   }
 
   .message {
@@ -211,5 +240,38 @@
 
   .split-actions .action {
     flex: 1;
+  }
+
+  .transitional-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px;
+    background: #f3f0ff;
+    border-radius: 6px;
+  }
+
+  .transitional-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: #7048e8;
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: lowercase;
+  }
+
+  .spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid #e5dbff;
+    border-top-color: #7048e8;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
 </style>

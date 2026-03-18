@@ -76,11 +76,17 @@
   let runId = $state('run_001');
 
   const transitions = {
-    initialize: { from: ['NEW', 'ERROR', 'SAFE'], to: 'INIT' },
-    launch: { from: ['INIT'], to: 'ORBIT' },
-    start: { from: ['ORBIT'], to: 'RUN' },
-    stop: { from: ['RUN'], to: 'ORBIT' },
-    land: { from: ['ORBIT'], to: 'INIT' },
+    initialize: {
+      from: ['NEW', 'INIT', 'ERROR', 'SAFE'],
+      to: 'initializing',
+      final: 'INIT',
+    },
+    launch: { from: ['INIT'], to: 'launching', final: 'ORBIT' },
+    start: { from: ['ORBIT'], to: 'starting', final: 'RUN' },
+    stop: { from: ['RUN'], to: 'stopping', final: 'ORBIT' },
+    land: { from: ['ORBIT'], to: 'landing', final: 'INIT' },
+    reconfigure: { from: ['ORBIT'], to: 'reconfiguring', final: 'ORBIT' },
+    interrupt: { from: ['ORBIT', 'RUN'], to: 'interrupting', final: 'SAFE' },
   };
 
   const labels = {
@@ -89,6 +95,8 @@
     start: 'Started',
     stop: 'Stopped',
     land: 'Landed',
+    reconfigure: 'Reconfigured',
+    interrupt: 'Interrupted',
   };
 
   function now() {
@@ -110,8 +118,12 @@
     satellites = satellites.map((sat) => {
       if (t.from.includes(sat.state)) {
         count++;
-        addLog('STATUS', sat.name, `${labels[command]} successful${suffix}`);
-        return { ...sat, state: t.to, lastMessage: labels[command] + suffix };
+        addLog('STATUS', sat.name, `${command} initiated${suffix}`);
+        return {
+          ...sat,
+          state: t.to,
+          lastMessage: `${command} in progress...`,
+        };
       }
       return sat;
     });
@@ -120,8 +132,26 @@
       addLog(
         'STATUS',
         'Controller',
-        `${labels[command]} ${count} satellite${count !== 1 ? 's' : ''}${suffix}`
+        `${command} initiated for ${count} satellite${count !== 1 ? 's' : ''}${suffix}`
       );
+
+      setTimeout(() => {
+        satellites = satellites.map((sat) => {
+          if (sat.state === t.to) {
+            addLog(
+              'STATUS',
+              sat.name,
+              `${labels[command]} successful${suffix}`
+            );
+            return {
+              ...sat,
+              state: t.final,
+              lastMessage: labels[command] + suffix,
+            };
+          }
+          return sat;
+        });
+      }, 1200);
     }
   }
 
@@ -133,11 +163,29 @@
 
     satellites = satellites.map((sat) => {
       if (sat.name === name && t.from.includes(sat.state)) {
-        addLog('STATUS', sat.name, `${labels[command]} successful${suffix}`);
-        return { ...sat, state: t.to, lastMessage: labels[command] + suffix };
+        addLog('STATUS', sat.name, `${command} initiated${suffix}`);
+        return {
+          ...sat,
+          state: t.to,
+          lastMessage: `${command} in progress...`,
+        };
       }
       return sat;
     });
+
+    setTimeout(() => {
+      satellites = satellites.map((sat) => {
+        if (sat.name === name && sat.state === t.to) {
+          addLog('STATUS', sat.name, `${labels[command]} successful${suffix}`);
+          return {
+            ...sat,
+            state: t.final,
+            lastMessage: labels[command] + suffix,
+          };
+        }
+        return sat;
+      });
+    }, 1200);
   }
 
   function clearLogs() {
